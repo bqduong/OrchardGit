@@ -1,0 +1,58 @@
+﻿@if (this.Model.Empty)
+{
+    <p class="mag-empty">@T("Basket is empty, checkout couldn't be perfomed")</p>
+}
+else
+{
+    String blockId = String.Format("_{0}", Guid.NewGuid());
+    this.Style.Require("Magelia");
+    this.Script.Require("Magelia.Checkout");
+    this.Script.Require("Magelia.AddressesManager");
+    this.Script.Require("Magelia.ShippingRates");
+    this.Script.Require("Magelia.Payment");
+    <ul class="mag-checkout"
+        data-config='
+            {
+                "errorMessage":"@T("An unexpected error has occured, please try again later")",
+                "editBillingAddressUrl":"@Url.Action("EditBillingAddress", new { controller = "Checkout", area = "Magelia.WebStore" })",
+                "selectBillingAddressUrl":"@Url.Action("SelectBillingAddress", new { controller = "Checkout", area = "Magelia.WebStore" })",
+                "editShippingAddressUrl":"@Url.Action("EditShippingAddress", new { controller = "Checkout", area = "Magelia.WebStore" })",
+                "selectShippingAddressUrl":"@Url.Action("SelectShippingAddress", new { controller = "Checkout", area = "Magelia.WebStore" })",
+                "registerBillingAddressUrl":"@Url.Action("RegisterBillingAddress", new { controller = "Checkout", area = "Magelia.WebStore" })",
+                "registerShippingAddressUrl":"@Url.Action("RegisterShippingAddress", new { controller = "Checkout", area = "Magelia.WebStore" })",
+                "getBillingAddressRecapUrl":"@Url.Action("GetBillingAddressRecap", new { controller = "Checkout", area = "Magelia.WebStore" })",
+                "getShippingAddressRecapUrl":"@Url.Action("GetShippingAddressRecap", new { controller = "Checkout", area = "Magelia.WebStore" })",
+                "editShippingRatesUrl":"@Url.Action("EditShippingRates", new { controller = "Checkout", area = "Magelia.WebStore" })",
+                "setShippingRatesUrl":"@Url.Action("SetShippingRates", new { controller = "Checkout", area = "Magelia.WebStore" })",
+                "getShippingRatesRecapUrl":"@Url.Action("GetShippingRatesRecap", new { controller = "Checkout", area = "Magelia.WebStore" })",
+                "editPaymentUrl":"@Url.Action("EditPayment", new { controller = "Checkout", area = "Magelia.WebStore" })",
+                "saveAsOrderUrl":"@Url.Action("SaveAsOrder", new { controller = "Checkout", area = "Magelia.WebStore" })",
+                "modifiyTriggerSelector":".mag-modify"
+            }
+        '
+    >
+        <li>
+            <div class="mag-header">
+                <h3>@T("1 - Billing Address")</h3>
+                <a class="mag-modify" href="javascript:void(0);">@T("Modify")</a>
+            </div>
+        </li>
+        <li>
+            <div class="mag-header">
+                <h3>@T("2 - Shipping Address")</h3>
+                <a class="mag-modify" href="javascript:void(0);">@T("Modify")</a>
+            </div>
+        </li>
+        <li>
+            <div class="mag-header">
+                <h3>@T("3 - Shipping rates")</h3>
+                <a class="mag-modify" href="javascript:void(0);">@T("Modify")</a>
+            </div>
+        </li>
+        <li>
+            <div class="mag-header">
+                <h3>@T("4 - Payment")</h3>
+            </div>
+        </li>
+    </ul>
+}

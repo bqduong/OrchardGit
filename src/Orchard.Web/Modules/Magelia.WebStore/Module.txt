@@ -1,0 +1,11 @@
+Name: Magelia WebStore
+AntiForgery: enabled
+Author: Magelia
+Website: http://www.magelia.org
+Version: 2.4
+OrchardVersion: 1.7
+Description: WebStore e-commerce module makes Magelia WebStore e-commerce features available in Orchard : products, shopping cart, etc.. This version of the Magelia WebStore module requires Orchard 1.7 and Magelia WebStore V2.4. If you use an earlier version of Orchard or Magelia WebStore, please visit the Orchard Gallery to get the appropriate version of the module. WARNING ! Magelia WebStore provides dynamic data that requires Orchard Output Cache to be partially disabled. On the Orchard Dashboard select settings > Cache  and add into the ignored URLs the pages that call the following widgets : Catalogs and Categories, Product list, Product, Currency picker, Country and Region picker.
+Features:
+    Magelia.WebStore:
+		Category: Commerce
+		Dependencies: Common, Shapes, Scheduling, Orchard.jQuery, Orchard.Users, Orchard.Widgets, Navigation

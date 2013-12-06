@@ -1,0 +1,296 @@
+﻿@functions{
+    String GetValue(dynamic product, String path)
+    {
+        Object element = product;
+        foreach (String property in path.Split('.'))
+        {
+            System.Reflection.PropertyInfo propertInfo;
+            if (element != null && (propertInfo = element.GetType().GetProperty(property)) != null)
+            {
+                element = propertInfo.GetValue(element, null);
+            }
+            else
+            {
+                return null;
+            }
+        }
+        return element.ToString();
+    }
+
+    String GetDetailUrl(dynamic product)
+    {
+        String url = this.Model.ViewDetailUrlPattern;
+        System.Text.RegularExpressions.MatchCollection matches = new System.Text.RegularExpressions.Regex(@"\{([^\}]+)\}*").Matches(url);
+        foreach (System.Text.RegularExpressions.Match match in matches)
+        {
+            String path = match.Groups[1].Value;
+            String value = this.GetValue(product, path);
+            if (value == null && product.GetType().Name.EndsWith("VariableProduct", StringComparison.OrdinalIgnoreCase))
+            {
+                value = this.GetValue(product.DefaultVariantProduct, path);
+            }
+            url = url.Replace(match.Groups[0].Value, value);
+        }
+        return this.Url.Content(url);
+    }
+
+    String GetUpdatedUrl(Int32 page)
+    {
+        return this.GetUpdatedUrl(page, this.Model.Products.State.SortDirection, this.Model.Products.State.SortExpression);
+    }
+
+    String GetUpdatedUrl(Nullable<Int32> page, System.Web.UI.WebControls.SortDirection sortDirection, String sortExpression)
+    {
+        return this.Model.Tools.GenerateUrl(this.Request.Url, page, sortDirection, sortExpression);
+    }
+
+    MvcHtmlString GetSortLink(String sortExpression, String text)
+    {
+        String link;
+        if (this.Model.EnableSorting)
+        {
+            TagBuilder builder = new TagBuilder("a");
+            Boolean sorted = sortExpression.Equals(this.Model.Products.State.SortExpression as String, StringComparison.OrdinalIgnoreCase);
+            builder.InnerHtml = this.T(text).ToString();
+            if (sorted)
+            {
+                builder.AddCssClass("sorted");
+                builder.AddCssClass(this.Model.Products.State.SortDirection == System.Web.UI.WebControls.SortDirection.Ascending ? "asc" : "desc");
+            }
+            builder.Attributes["href"] = this.GetUpdatedUrl(this.Model.Products.State.Page, (sorted && this.Model.Products.State.SortDirection == System.Web.UI.WebControls.SortDirection.Descending) || !sorted ? System.Web.UI.WebControls.SortDirection.Ascending : System.Web.UI.WebControls.SortDirection.Descending, sortExpression);
+            link = builder.ToString();
+        }
+        else
+        {
+            link = this.T(text).ToString();
+        }
+        return new MvcHtmlString(link);
+    }
+
+    void GetAttributeAndValue(dynamic product, dynamic derivedAttributes, out dynamic attribute, out dynamic attributeValue)
+    {
+        attribute = null;
+        attributeValue = null;
+        foreach (var productAttributeValue in product.AttributeValues)
+        {
+            foreach (var derivedAttribute in derivedAttributes)
+            {
+                if (derivedAttribute.AttributeId == productAttributeValue.AttributeId)
+                {
+                    attribute = derivedAttribute;
+                    attributeValue = productAttributeValue;
+                    break;
+                }
+            }
+            if (attribute != null)
+            {
+                break;
+            }
+        }
+    }
+
+    Boolean IsAvailable(dynamic product)
+    {
+        if (!this.Model.DisplayProductsAvailability)
+        {
+            return true;
+        }
+        foreach (var inventory in this.Model.Products.Inventories)
+        {
+            if (inventory.ProductId == product.ProductId)
+            {
+                return inventory.Available;
+            }
+        }
+        return false;
+    }
+}
+
+@{
+    this.Style.Require("Magelia");   
+}
+
+@if (this.Model.Products.Count > 0)
+{
+    <table class="mag-productList">
+        <thead>
+            <tr>
+                <th>
+                    @GetSortLink("Name", "Name")
+                </th>
+                @foreach (var derivedAttributes in this.Model.DerivedAttributes)
+                {
+                    var attribute = Enumerable.First(derivedAttributes.Value);
+                    <th>
+                        @GetSortLink(derivedAttributes.Key, String.IsNullOrEmpty(attribute.Name) ? attribute.Code : attribute.Name)
+                    </th>
+                }
+                <th>
+                    @GetSortLink("ShortDescription", "Description")
+                </th>
+                <th>
+                    @GetSortLink("PriceWithLowerQuantity.SalePriceIncludingDiscountAndTaxes", "Price")
+                </th>
+                @if (this.Model.DisplayProductsAvailability)
+                { 
+                    <th>
+                        @T("Available")
+                    </th>
+                }
+                @if (this.Model.AllowAddToBasket)
+                { 
+                    <th>
+                        @T("Add to cart")
+                    </th>
+                }
+                @if (this.Model.DisplayViewDetail)
+                { 
+                    <th>
+                        @T("Detail")
+                    </th>
+                }
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var referenceProduct in this.Model.Products)
+            {
+                var available = this.IsAvailable(referenceProduct);
+                var product = referenceProduct.GetType().Name.EndsWith("variantproduct", StringComparison.OrdinalIgnoreCase) ? referenceProduct.VariableProduct : referenceProduct;
+                <tr>
+                    <td>
+                        @(String.IsNullOrEmpty(product.Name) ? referenceProduct.SKU : product.Name)
+                    </td>
+                    @foreach (var derivedAttributes in this.Model.DerivedAttributes)
+                    {
+                        dynamic attribute, attributeValue;
+                        this.GetAttributeAndValue(referenceProduct, derivedAttributes.Value, out attribute, out attributeValue);
+                        <td>
+                            @if (attribute != null && attribute.ShowInProductList)
+                            {
+                                if ("boolean".Equals(attribute.AttributeTypeCode, StringComparison.OrdinalIgnoreCase))
+                                { 
+                                <input type="checkbox" disabled="disabled" @if (attributeValue.BooleanValue != null && attributeValue.BooleanValue)
+                                                                           {<text>checked="checked"</text>} />
+                                }
+                                else if ("integer".Equals(attribute.AttributeTypeCode, StringComparison.OrdinalIgnoreCase))
+                                { 
+                                @attributeValue.IntValue
+                                }
+                                else if ("decimal".Equals(attribute.AttributeTypeCode, StringComparison.OrdinalIgnoreCase))
+                                { 
+                                @attributeValue.DecimalValue
+                                }
+                                else if ("datetime".Equals(attribute.AttributeTypeCode, StringComparison.OrdinalIgnoreCase))
+                                { 
+                                @(attributeValue.DateTimeValue == null ? null : TimeZoneInfo.ConvertTime(attributeValue.DateTimeValue, this.WorkContext.CurrentTimeZone).ToString("G"))
+                                }
+                                else if ("list".Equals(attribute.AttributeTypeCode, StringComparison.OrdinalIgnoreCase))
+                                { 
+                                @(String.IsNullOrEmpty(attributeValue.ListValue) ? attributeValue.ListCode : attributeValue.ListValue)
+                                }
+                                else if ("string".Equals(attribute.AttributeTypeCode, StringComparison.OrdinalIgnoreCase))
+                                { 
+                                @attributeValue.StringValue
+                                }
+                                else if (Enumerable.Any(attributeValue.Files))
+                                {
+                                <ul>
+                                    @if (attribute.AttributeTypeCode.StartsWith("image", StringComparison.OrdinalIgnoreCase))
+                                    {
+                                        foreach (var image in attributeValue.Files)
+                                        {
+                                        <li>
+                                            <img src="@image.Path" title="@image.Title" alt="@(String.IsNullOrEmpty(image.AlternateText) ? String.IsNullOrEmpty(product.Name) ? referenceProduct.SKU : product.Name : image.AlternateText)" />
+                                        </li>
+                                        }
+                                    }
+                                    else
+                                    {
+                                        foreach (var file in attributeValue.Files)
+                                        {
+                                        <li>
+                                            <a href="@file.Path">@(String.IsNullOrEmpty(file.Name) ? String.IsNullOrEmpty(file.Title) ? String.IsNullOrEmpty(file.AlternateText) ? file.Path : file.AlternateText : file.Title : file.Name)</a>
+                                        </li>
+                                        }
+                                    }
+                                </ul>
+                                }
+                            }
+                        </td>
+                    }
+                    <td class="description">
+                        @Html.Raw(product.ShortDescription)
+                    </td>
+                    <td>
+                        @(referenceProduct.PriceWithLowerQuantity.SalePriceIncludingDiscountAndTaxes.ToString("C", this.Model.NumberFormat))
+                    </td>
+                    @if (this.Model.DisplayProductsAvailability)
+                    { 
+                        <td>
+                            <input type="checkbox" disabled="disabled" @if (available)
+                                                                       {<text>checked="checked"</text>} />
+                        </td>
+                    }
+                    @if (this.Model.AllowAddToBasket)
+                    { 
+                        <td>
+                            @if (available)
+                            {
+                                @Display(this.New.AddToBasket(ProductId: referenceProduct.ProductId))
+                            }
+                            else
+                            {
+                                @T("Unavailable")
+                            }
+                        </td>
+                    }
+                    @if (this.Model.DisplayViewDetail)
+                    { 
+                        <td>
+                            @Html.Link(T("View detail").ToString(), this.GetDetailUrl(product) as String)
+                        </td>
+                    }
+                </tr>
+            }
+        </tbody>
+        @if (this.Model.EnablePaging && this.Model.Products.State.PageCount > 1)
+        { 
+            <tfoot>
+                <tr>
+                    <td colspan="@( 3 + this.Model.DerivedAttributes.Count + (this.Model.DisplayProductsAvailability ? 1 : 0) + (this.Model.DisplayViewDetail ? 1 : 0) + (this.Model.AllowAddToBasket ? 1 : 0))">
+                        <ul>
+                            @if (this.Model.Products.State.Page != 1)
+                            { 
+                                <li>
+                                    @Html.Link("<<", this.GetUpdatedUrl(1))
+                                </li>
+                                <li>
+                                    @Html.Link("<", this.GetUpdatedUrl(this.Model.Products.State.Page - 1) as String)
+                                </li>
+                            }
+                            @for (var i = 1; i <= this.Model.Products.State.PageCount; i++)
+                            { 
+                                <li class="@(this.Model.Products.State.Page == i ? "selected" : null)">
+                                    @Html.Link(i.ToString(), this.GetUpdatedUrl(i))
+                                </li>
+                            }
+                            @if (this.Model.Products.State.Page != this.Model.Products.State.PageCount)
+                            { 
+                                <li>
+                                    @Html.Link(">", this.GetUpdatedUrl(this.Model.Products.State.Page + 1) as String)
+                                </li>
+                                <li>
+                                    @Html.Link(">>", this.GetUpdatedUrl(this.Model.Products.State.PageCount) as String)
+                                </li>
+                            }
+                        </ul>
+                    </td>
+                </tr>
+            </tfoot>
+        }
+    </table>
+}
+else
+{
+    <p class="mag-empty">@T("No products to display")</p>
+}

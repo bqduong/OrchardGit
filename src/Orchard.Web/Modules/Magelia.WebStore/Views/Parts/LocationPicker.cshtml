@@ -1,0 +1,57 @@
+﻿@functions{
+    IEnumerable<SelectListItem> GetCountryItems()
+    {
+        List<SelectListItem> countryItems = new List<SelectListItem>();
+        foreach (var country in this.Model.Countries)
+        {
+            countryItems.Add(new SelectListItem { Text = country.Name, Value = country.CountryId.ToString(), Selected = country.CountryId == (Int32)this.Model.CurrentCountryId });
+        }
+        return countryItems;
+    }
+
+    IEnumerable<SelectListItem> GetRegionItems()
+    {
+        List<SelectListItem> regionItems = new List<SelectListItem>();
+        if (this.Model.Regions != null)
+        {
+            foreach (var region in this.Model.Regions)
+            {
+                regionItems.Add(new SelectListItem { Text = region.Name, Value = region.RegionId.ToString(), Selected = region.RegionId == this.Model.CurrentRegionId as Nullable<Guid> });
+            }
+        }
+        return regionItems;
+    }
+}
+
+@{
+    IEnumerable<SelectListItem> regionItems = this.GetRegionItems();
+    IEnumerable<SelectListItem> countryItems = this.GetCountryItems();
+
+    String regionDropDownListId = String.Format("_{0}", Guid.NewGuid());
+    String countryDropDownListId = String.Format("_{0}", Guid.NewGuid());
+
+    if (!this.IsAjax)
+    {
+        this.Style.Require("Magelia");
+        this.Script.Require("Magelia.LocationPicker");
+    }
+}
+
+<div class="mag-locationPicker"
+         data-config='
+            {
+                "regionFieldSelector":"#@regionDropDownListId",
+                "countryFieldSelector":"#@countryDropDownListId",
+                "updateLocationUrl":"@Url.Action("UpdateLocation", new { controller = "Context", area = "Magelia.WebStore" })",
+                "locationPickerUrl":"@Url.Action("LocationPicker", new { controller = "Context", area = "Magelia.WebStore", locationPickerPartId = this.Model.LocationPickerPartId })"
+            }
+         '
+    >
+    <label for="@countryDropDownListId">@T("Country")</label>
+    @Html.DropDownList("countryId", countryItems, new { id = countryDropDownListId })
+    @if (Enumerable.Any(regionItems))
+    {
+        <label for="@regionDropDownListId">@T("Region")</label>
+        @Html.DropDownList("regionId", regionItems, this.T("Select region").ToString(), new { id = regionDropDownListId })
+    }
+</div>

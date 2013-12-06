@@ -1,0 +1,75 @@
+﻿@model Magelia.WebStore.Models.Parts.SettingsPart
+@{
+    this.Script.Require("jQuery");
+    String defaultGuid = default(Guid).ToString();            
+}
+@using (this.Script.Foot())
+{ 
+    <script type="text/javascript">
+        //<![CDATA
+        $(document).ready(
+            function () {
+                var pending = false;
+                var prefix = '@ViewContext.ViewData.TemplateInfo.HtmlFieldPrefix';
+                var storeId = $('#@Html.FieldIdFor(m => m.StoreId)');
+                var testButton = $('button.test');
+                var resetTest = function () { pending = false; testButton.text('@T("Test")'); };
+                if (storeId.val() == '@defaultGuid') {
+                    storeId.val('');
+                }
+                testButton.click(
+                    function () {
+                        if (!pending) {
+                            pending = true;
+                            testButton.text('@T("Please wait...")');
+                            $.ajax(
+                                {
+                                    type: 'post',
+                                    url: '@Url.Action("Test", new { controller = "WebStoreSettings", area = "Magelia.WebStore" })',
+                                    data: $(testButton.closest('form').serializeArray()).map(function () { return this.name.indexOf(prefix) == -1 ? this : $.extend({}, this, { name: this.name.substring(prefix.length + 1, this.name.length) }); }),
+                                    success: function (result) {
+                                        alert(result.message);
+                                        resetTest();
+                                    },
+                                    error: function () {
+                                        alert('@T("An error has occured, please make sure that the specified parameters are valid.")');
+                                        resetTest();
+                                    }
+                                }
+                            );
+                        }
+                    }
+                );
+            }
+        );
+        //]]>
+    </script>
+}
+<fieldset>
+    <legend>
+        @T("Services")
+    </legend>
+    <div>
+        @Html.LabelFor(m => m.StoreId, T("Store ID"))
+        @Html.TextBoxFor(m => m.StoreId, new { @class = "textMedium" })
+        <span class="hint">@T("Enter the StoreID, as defined in your Magelia WebStore environment.<br/> This parameter is defined in the Magelia WebStore Administration Console in the Admininstration > Store > Settings screen (Store ID field).")</span>
+    </div>
+    <div>
+        @Html.LabelFor(m => m.ServicesPath, T("Services path"))
+        @Html.TextBoxFor(m => m.ServicesPath, new { @class = "textMedium servicesPath" })
+        <button type="button" class="test">@T("Test")</button>
+        <span class="hint">@T("This module needs to connect to a running Magelia WebStore environment.<br/> Once you have set-up Magelia WebStore software (independently from Orchard), indicate here the path to access the Magelia WebStore services.")</span>
+    </div>
+</fieldset>
+<fieldset>
+    <legend>
+        @T("Regional Settings")
+    </legend>
+    <div>
+        @Html.CheckBoxFor(m => m.AllowRegionNavigation)
+        <label for="@Html.FieldIdFor(m => m.AllowRegionNavigation)" class="forcheckbox">
+            @T("Enable region / state selection")
+        </label>
+        <span class="hint">@T("This option enables a visitor to select a shipping region or state in addition to a shipping country.<br/>  Enable region / state selection if the shipping region or state does influence tax or shipping calculations.")</span>
+    </div>
+</fieldset>

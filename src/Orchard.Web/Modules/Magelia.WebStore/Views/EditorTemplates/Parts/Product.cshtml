@@ -1,0 +1,65 @@
+﻿@model Magelia.WebStore.Models.Parts.ProductPart
+@{
+    this.Script.Require("jQuery");               
+}
+@using (this.Script.Foot())
+{ 
+    <script type="text/javascript">
+    //<![CDATA[
+        $(document).ready(
+            function () {
+                var fromUrlFields = $('.mag-fromUrl');
+                var specificFields = $('.mag-specific');
+                $('#@Html.FieldIdFor(m => m.FromUrl)').change(
+                    function () {
+                        if ($(this).is(':checked')) {
+                            fromUrlFields.show();
+                            specificFields.hide();
+                        }
+                        else {
+                            fromUrlFields.hide();
+                            specificFields.show();
+                        }
+                    }
+                ).change();
+            }
+        );
+    //]]>
+    </script>
+}
+<fieldset>
+    <legend>@T("Product settings")</legend>
+    <div>
+        @Html.CheckBoxFor(m => m.FromUrl)
+        <label class="forcheckbox" for="@Html.FieldIdFor(m => m.FromUrl)">
+            @T("Display Product automaticaly according to URL parameters")
+        </label>
+    </div>
+    <div class="mag-fromUrl">
+        <span class="hint">@T("In the following relative URL : ~/Product?catalog=AAA&product=BBB, the URL parameter that defines the catalog code is \"catalog\" and the URL parameter that defines the product SKU is \"product\".")</span>
+    </div>
+    <div class="mag-fromUrl">
+        @Html.LabelFor(m => m.CatalogCodeUrlParameterKey, T("URL parameter that defines the catalog code"))
+        @Html.TextBoxFor(m => m.CatalogCodeUrlParameterKey, new { @class = "text-box" })
+    </div>
+    <div class="mag-fromUrl">
+        @Html.LabelFor(m => m.SKUUrlParameterKey, T("URL parameter that defines the product SKU"))
+        @Html.TextBoxFor(m => m.SKUUrlParameterKey, new { @class = "text-box" })
+    </div>
+    <div class="mag-specific">
+        @Html.LabelFor(m => m.CatalogCode, T("Catalog code"))
+        @Html.TextBoxFor(m => m.CatalogCode, new { @class = "text-box" })
+        <span class="hint">@T("Indicate the catalog code (as defined in Magelia WebStore administration console), containing the product SKU that you want to display")</span>
+    </div>
+    <div class="mag-specific">
+        @Html.LabelFor(m => m.SKU, T("Product SKU"))
+        @Html.TextBoxFor(m => m.SKU, new { @class = "text-box" })
+        <span class="hint">@T("Indicate the Product SKU that you want to display (as defined in the Magelia WebStore administration console)")</span>
+    </div>
+    <div>
+        @Html.CheckBoxFor(m => m.AllowAddToBasket)
+        <label for="@Html.FieldIdFor(m => m.AllowAddToBasket)" class="forcheckbox">
+            @T("Allow visitors to add product to basket")
+        </label>
+    </div>
+</fieldset>

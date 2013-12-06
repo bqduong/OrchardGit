@@ -1,0 +1,27 @@
+﻿@{
+    this.Style.Require("Magelia");
+}
+@if (this.Model.Hierarchy.Count > 0)
+{
+    <ul class="mag-catalogHierarchy">
+        @if (this.Model.Hierarchy.Count == 1)
+        {
+            var catalog = this.Model.Hierarchy[0];
+            foreach (var category in catalog.Categories)
+            { 
+            <li>
+                @Display(this.New.CategoryItem(CatalogHierarchyPartId: this.Model.CatalogHierarchyPartId, Item: category, PathSeparator: this.Model.PathSeparator, Path: catalog.Catalog.Code, Tools: this.Model.Tools, GenerateUrls: this.Model.GenerateUrls, HasTargetPath : this.Model.HasTargetPath))
+            </li>
+            }
+        }
+        else
+        {
+            foreach (var catalog in this.Model.Hierarchy)
+            {
+            <li>
+                @Display(this.New.CatalogItem(CatalogHierarchyPartId: this.Model.CatalogHierarchyPartId, Item: catalog, PathSeparator: this.Model.PathSeparator, Tools: this.Model.Tools, GenerateUrls: this.Model.GenerateUrls))
+            </li>
+            }
+        }
+    </ul>
+}

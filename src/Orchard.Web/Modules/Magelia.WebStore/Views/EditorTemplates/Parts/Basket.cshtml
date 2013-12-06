@@ -1,0 +1,16 @@
+﻿@model Magelia.WebStore.Models.Parts.BasketPart
+<fieldset>
+    <legend>@T("Basket settings")</legend>
+    <div>
+        @Html.CheckBoxFor(m => m.ReadOnly)
+        <label class="forcheckbox" for="@Html.FieldIdFor(m => m.ReadOnly)">
+            @T("Do not allow visitors to modify the basket ( items, qty, promo codes, etc )")
+        </label>
+        <span class="hint">@T(@"In order to ensure accurate basket calculations this option must be checked if you use this widget on the checkout page.<br/> Leave it unchecked to allow visitors to modify the basket, if you use this widget on the checkout page.")</span>
+    </div>
+    <div>
+        @Html.LabelFor(m => m.CheckoutUrl, T("Checkout url"))
+        @Html.TextBoxFor(m => m.CheckoutUrl, new { @class = "text-box" })
+        <span class="hint">@T(@"Relative path of the checkout page.")</span>
+    </div>
+</fieldset>

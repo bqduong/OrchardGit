@@ -1,0 +1,241 @@
+﻿<form method="post" action="http://www.yourpaymentprovider.com" class="mag-proceedToPayment">
+    <p class="mag-error">
+        @T("Override this view (DisplayTemplates\\Checkout\\ProceedToPayment.cshtml) in your theme in order to submit payment data to the payment provider of your choice.")<br />
+        @T("The newly generated order is accessible in the model of this view (this.Model.Order).")<br />
+        @T("If this form contains at least one input field it will be automatically submitted.")<br />
+    </p>
+</form>
+
+@* 
+    This view will be automatically submitted by the Checkout component if it contains a form which has one input at least.
+
+    All information about the newly generated Order is located in the attribute Order of the current view model (this.Model.Order).
+
+    Here is the composition of all elements which constitute an Order:
+
+
+    [Order]
+    
+    Guid                            OrderId                                     // Unique ID of the Order.
+    Int32                           OrderNumber                                 // Incremental order number relative to the store.
+    String                          AlternateOrderNumber                        // Alternative order number which could be manualy contributed in the Administration Console or by a Magelia WebStore extension.
+    OrderStatus                     Status                                      // Current status of the Order, possibilities: New, Approved, InProcess, Canceled, Rejected, FurtherInquiryRequired, PaymentDue, OnHold, Shipped.
+    String                          IpAddress                                   // IP address of the customer who created this Order.
+    Boolean                         SeparateBilling                             // Indicate if the ShippingAddress is different from the BillingAddress, if not, the BillingAddress must be used as the ShippingAddress.
+    OrderAddress                    BillingAddress                              // Billing address provided by the Customer to generate the Order.
+    OrderAddress                    ShippingAddress                             // Shipping address provided by the Customer to generate the Order, it could be null if SeparateBilling is false.
+    Guid                            CustomerId                                  // Unique ID of the Customer who generate the Order.
+    String                          UserName                                    // User name of the Customer who generate the Order.
+    String                          CreatorUserName                             // User name of the User who created the Order if it has been created by an agent in the Administration Console.
+    String                          LastModificatorUserName                     // User name of the last agent who modified the Order in the Administration Console.
+    DateTimeOffset                  LastModificationDate                        // Date of the last modification of the Order.
+    Int32                           CurrencyId                                  // Unique ID of the currency used to process the Order.
+    Int32                           CultureId                                   // Unique ID of the culture used to localize product information in the Order.
+    String                          OrderChannelCode                            // Administrative code to identify from which channel the Order has been generated.
+    String                          TaxZoneCode                                 // Administrative code of the destination TaxZone used to compute taxes on products prices and shipping costs.
+    DateTimeOffset                  CreationDate                                // Creation date of the first version of the Order.
+    Int32                           SKUCount                                    // Number of distinct product references contained in the Order.
+    Int32                           ProductCount                                // Number or products contained in the Order.
+    Decimal                         LineItemsTotal                              // Total price of LineItems contained in the Order without taxes and discounts.
+    Decimal                         LineItemsDiscount                           // Total discounts applied on LineItems contained in the Order regardless taxes.
+    Decimal                         LineItemsTaxes                              // Total taxes applied in LineItems container in the Order regardless discounts.
+    Decimal                         LineItemsTaxesConsideringUnitDiscount       // Total taxes applied in LineItems container in the Order after discounts application on LineItems.
+    Decimal                         LineItemsTotalIncludingDiscount             // Total price of LineItems contained in the Order without taxes after discounts application without taxes.
+    Decimal                         LineItemsTotalIncludingDiscountAndTaxes     // Total price of LineItems contained in the Order after discounts and taxes applications
+    Decimal                         ShippingTotal                               // Shipping costs total of each OrderSubset contained in the Order without taxes and discounts.
+    Decimal                         ShippingDiscount                            // Total discounts applied on shipping costs of each OrderSubset contained in the Order.
+    Decimal                         ShippingTaxes                               // Total taxes applied on shipping costs of each OrderSubset contained in the Order regardless discounts.
+    Decimal                         ShippingTaxesConsideringShippingDiscount    // Total taxes applied on shipping costs of each OrderSubset contained in the Order after discounts application.
+    Decimal                         ShippingTotalIncludingDiscount              // Shipping costs total of each OrderSubset contained in the Order after discounts application without taxes.
+    Decimal                         ShippingTotalIncludingDiscountAndTaxes      // Shipping costs total of each OrderSubset contained in the Order after discounts and taxes application.
+    Decimal                         OrderTotal                                  // Total price of the Order without taxes and discounts.
+    Decimal                         OrderTaxes                                  // Total taxes applied on shipping costs and LineItems regardless taxes and discounts.
+    Decimal                         OrderDiscount                               // Discounts applied on the Order regardless shipping discounts and LineItem discounts.
+    Decimal                         OrderTotalIncludingDiscount                 // Total price of the Order after discounts application on shipping costs, LineItems and the order regardless taxes.
+    Decimal                         OrderTotalIncludingTotalDiscountAndTaxes    // Total price of the Order after discounts application on shipping costs, LineItems and the order after discounts and taxes application.
+    Decimal                         Weight                                      // Total weight of the Order.
+    String                          WeightUnit                                  // Unit used by the store to quantify weight of each product.
+    String                          LengthUnit                                  // Unit used by the store to quantify dimensions of each product.
+    IEnumerable<DiscountDetail>     DiscountDetail                              // Collection of all discounts information applied on the Order only.
+    IEnumerable<AdditionalDataItem> AdditionalData                              // Collection of additional data attached to the Order by Magelia WebStore extensions. 
+    IEnumerable<Comment>            Comments                                    // Collection of Comments managed in the Administration Console.
+    IEnumerable<OrderSubset>        OrderSubsets                                // Collection of OrderSubsets which split the Order from different Warehouses or for virtual unmanaged products.
+    IEnumerable<DiscountUse>        DiscountUses                                // Collection of objects which describe each applied discounts on the Order only.
+    
+
+
+    [OrderSubset]
+    
+    Guid                            OrderSubsetId                               // Unique ID of the OrderSubset.
+    Guid                            OrderHeaderId 			                    // Unique ID of the Order to which the OrderSubset belongs to. 
+    String                          OrderSubsetNumber                           // Number generated relatively to the Order for the OrderSubset.
+    String                          CarrierCode                                 // Administrative code of the Carrier used to ship the OrderSubset, it could be null if the OrderSubset contains unmanaged virtual products.
+    String                          CarrierName                                 // Localized name of the Carrier used to ship the OrderSubset, it could be null if the OrderSubset contains unmanaged virtual products.
+    String                          WarehouseCode                               // Administrative code of the Warehouse from which the OrderSubet is shipped, it could be null if the OrderSubset contains unmanaged virtual products.
+    String                          WarehouseName                               // Localized name of the Warehouse from which the OrderSubet is shipped, it could be null if the OrderSubset contains unmanaged virtual products.
+    String                          ShippingZoneCode                            // Administrative code of the ShippingZone in which the OrderSubset will be shipped, it could be null if the OrderSubset contains unmanaged virtual products.
+    String                          ShippingRateCode                            // Administrative code of the ShippingRate picked by the Customer to ship the OrderSubset, it could be null if the OrderSubset contains unmanaged virtual products.
+    String                          ShippingRateDescription                     // Localized description of the ShippingRate picked by the Customer to ship the OrderSubset, it could be null if the OrderSubset contains unmanaged virtual products.
+    Boolean                         Virtual                                     // Indicate if the OrderSubset contains only virtual unmanaged products which need no shipping process.
+    Decimal                         ShippingRateValue                           // Shipping costs applied to the OrderSubset without taxes and discounts.
+    Decimal                         ShippingDiscount                            // Discounts applied on shipping costs regardless taxes.
+    Decimal                         ShippingTaxes                               // Taxes applied on shipping costs regardless discounts.
+    Decimal                         ShippingTaxesConsideringShippingDiscount    // Taxes applied on shipping costs after discounts application.
+    Decimal                         ShippingRateValueIncludingTaxes             // Shipping costs after taxes application regardless discounts.
+    Decimal                         ShippingRateValueIncludingDiscount          // Shipping costs after discounts applications regardless taxes.
+    Decimal                         ShippingRateValueIncludingDiscountAndTaxes  // Shipping costs after discounts and taxes application.
+    Int32                           SKUCount                                    // Number of distinct product references contained in the OrderSubset.
+    Int32                           ProductCount                                // Number or products contained in the OrderSubset.
+    Decimal                         LineItemsTotal                              // Total price of LineItems contained in the OrderSubset regardless discounts and taxes.
+    Decimal                         LineItemsDiscount                           // Total discounts applied on LineItems contained in the OrderSubset regardless taxes.
+    Decimal                         LineItemsTaxes                              // Total taxes applied on LineItems contained in the OrderSubset regardless discounts.
+    Decimal                         LineItemsTaxesConsideringUnitDiscount       // Total taxes applied on LineItems container in the OrderSubset after discounts application.
+    Decimal                         LineItemsTotalIncludingDiscount             // Total price of LineItems contained in the OrderSubset after discounts application without taxes.
+    Decimal                         LineItemsTotalIncludingDiscountAndTaxes     // Total price of LineItems contained in the OrderSubset after discounts and taxes application.
+    Decimal                         OrderSubsetTotal                            // Total price of the OrderSubset, including LineItems total and shipping costs regardless discounts and taxes.
+    Decimal                         OrderSubsetDiscount                         // Total discounts applied in OrderSubset regardless taxes.
+    Decimal                         OrderSubsetTaxes                            // Total taxes applied in OrderSubset regardless discounts.
+    Decimal                         OrderSubsetTotalIncludingDiscount           // Total price of the OrderSubset after discounts application on LineItems and shipping costs regardless taxes.
+    Decimal                         OrderSubsetTotalIncludingDiscountAndTaxes   // Totat price of the OderSubset after discounts and taxes application on LineItems and shipping costs.
+    Decimal                         Weight                                      // Total weight of the OrderSubset.
+    IEnumerable<DiscountDetail>     DiscountDetail                              // Collection of all discounts information applied on the OrderSubset only.
+    IEnumerable<TaxDetail>          TaxesDetail                                 // Collection of all taxes information applied on shipping costs.
+    IEnumerable<AdditionalDataItem> AdditionalData                              // Collection of additional data attached to the OrderSubet by Magelia WebStore extensions. 
+    IEnumerable<Comment>            Comments                                    // Collection of Comments managed in the Administration Console.
+    IEnumerable<LineItem>           LineItems                                   // Collection of LineItems which correspond to each products contained in the OrderSubset.
+
+
+
+    [LineItem]
+
+    Guid                            LineItemId                                                          // Unique ID of the LineItem.
+    Guid                            OrderSubsetId                                                       // Unique ID of the OrderSubset to which the LineItem belongs to.
+    Nullable<Guid>                  ProductId                                                           // Unique ID of the purchased Product.
+    String                          ProductTypeCode                                                     // Administrative code of the ProductType which structures ProductCatalog information and inventory management.
+    String                          ProductTypeName                                                     // Localized name of the ProductType which structures ProductCatalog information and inventory management.
+    String                          SKU                                                                 // SKU of the purchased Product.
+    String                          ProductName                                                         // Localized name of the purchased Product.
+    String                          ProductDescription                                                  // Localized short description of the purchased Product.
+    Nullable<Guid>                  CatalogId                                                           // Unique ID of the Catalog which contains the purchased Product.
+    String                          CatalogCode                                                         // Administrative code of the Catalog which contains the purchased Product.
+    String                          CatalogName                                                         // Localized name of the Catalog which contains the purchased Product.
+    Decimal                         UnitWeight                                                          // Unit weight of the purchased Product. 
+    Decimal                         Width                                                               // Width of the purchased Product.
+    Decimal                         Height                                                              // Height of the purchased Product.
+    Decimal                         Length                                                              // Length of the purchased Product.
+    DateTimeOffset                  CreationDate                                                        // Creation date of the LineItem corresponding to the date of the adding of the product into the basket.
+    DateTimeOffset                  LastModificationDate                                                // Last computation date of the LineItem.
+    Boolean                         Gift                                                                // Indicate if the Product is offered.
+    Decimal                         UnitPrice                                                           // Unit price of the purchased product without discounts and taxes.
+    Decimal                         UnitDiscount                                                        // Discount applied to the UnitPrice regardless taxes.
+    Decimal                         UnitPriceIncludingUnitDiscount                                      // Unit price of the purchased product after discount application without taxes.
+    Decimal                         UnitTaxes                                                           // Taxes applied to UnitPrice regardless discounts.
+    Decimal                         UnitTaxesConsideringUnitDiscount                                    // Taxes applied to UnitPrice after discounts application.
+    Decimal                         UnitPriceIncludingTaxes                                             // Unit price of the purchased Product after taxes application regardless discounts.
+    Decimal                         UnitPriceIncludingUnitDiscountAndUnitTaxesConsideringUnitDiscount   // Unit price of the purchased Product after discounts and taxes application.
+    Int32                           Quantity                                                            // Purchased quantity of Product.
+    Decimal                         LineItemPrice                                                       // Total price of the LineItem without discounts and taxes.
+    Decimal                         LineItemDiscount                                                    // Total discounts applied to the LineItem regardless taxes.
+    Decimal                         LineItemTaxes                                                       // Total taxes applied to the LineItem regardless discounts.
+    Decimal                         LineItemTaxesConsideringUnitDiscount                                // Total taxes applied to the LineItem after discount application.
+    Decimal                         TotalIncludingTaxes                                                 // Total price of the LineItem after taxes application regardless discounts.
+    Decimal                         TotalIncludingDiscount                                              // Total price of the LineItem after discounts application regardless taxes.
+    Decimal                         TotalIncludingDiscountAndTaxesConsideringUnitDiscount               // Total price of the LineItem after discounts and taxes application.
+    Decimal                         TotalWeight                                                         // Total weight represented by the quantity of Products related to the LineItem.
+    IEnumerable<DiscountDetail>     DiscountDetail                                                      // Collection of all discounts information applied to the LineItem only.
+    IEnumerable<TaxDetail>          TaxesDetail                                                         // Collection of all taxes information applied to the LineItem only.
+    IEnumerable<PricingDetail>      PricingDetail                                                       // Collection of price composition which describes how the LineItemPrice has be calculated.
+    IEnumerable<AdditionalDataItem> AdditionalData                                                      // Collection of additional data attached to the LineItem by Magelia WebStore extensions or services. 
+    IEnumerable<ProductDetail>      ProductDetail                                                       // Collection of product attributes according to the ProductType of the Product.
+
+
+    
+    [DiscountDetail]
+    
+    Guid        DiscountId              // Unique ID of the Discount which has been applied.
+    String      Code                    // Administrative code of the discount.
+    String      Name                    // Localized name of the discount.
+    String      Description             // Localized description of the discount.
+    Decimal     Value                   // Calculated value of the discount regardless taxes.
+    Decimal     ValueIncludingTaxes     // Calculated value of the discount with taxes inclusion.
+
+    
+
+    [AdditionalDataItem]
+    
+    String      Code                    // Unique code of the AdditionalDataItem, relatively to the collection.
+    Object      Value                   // Value of the AdditionalDataItem, Magelia WebStore extensions could register anything to extend data of an entity like Order, OrderSubset, LineItems, Adresses ...
+
+    
+
+    [Comment]
+
+    String          UserName            // User name of the agent who add the comment in the Administration Console.
+    DateTimeOffset  CreationDate        // Creation date of the comment.
+    String          Content             // Content or message of the comment.
+
+    
+    
+    [DiscountUse]
+
+    Guid                                DiscountId          // Unique ID of the Discount which has been applied.
+    IEnumerable<AdditionalDataItem>     AdditionalData      // Collection of additional data used internally to persist specific results of discounts processes.
+
+
+
+    [TaxDetail]
+
+    String      Code        // Administrative code of the TaxCategory used to compute the applicable TaxRate.
+    String      Name        // Localized name of the TaxCategoryy.
+    Decimal     Value       // Amount of tax applied to the related price according to the TaxRate percentage.
+
+
+
+    [PricingDetail]
+    
+    Int32       Quantity    // Corresponding quantity of the price used price to compose LineItemPrice.
+    Int32       Factor      // Indicated how many time this price is used in the LineItemPrice composition.
+    Decimal     Value       // Value of the price in the currency of the Order.
+
+    
+
+    [ProductDetail] => This element is used to store all attribute values of the purchased Product according to its ProductType.
+
+    String                      Type                // Type of the ProductAttribute, possibilities : Application, Applications, Audio, Audios, Boolean, DateTime, Decimal, Document, Documents, File, Files, Image, Images, Integer, List, Unknown, Unknowns, String, Video, Videos.
+    String                      Code                // Administrative code of the ProductAttribute.
+    String                      Name                // Localizeed name of the ProductAttribute.
+    Int32                       Order               // Display order of the ProductAttribute in the collection attached to the Product.
+    Nullable<Int32>             IntValue            // Integer value, could be null if the type of the ProductAttribute is not Integer or is not required.
+    Nullable<Decimal>           DecimalValue        // Decimal value, could be null if the type of the ProductAttribute is not Decimal or is not required.
+    Nullable<DateTimeOffset>    DateTimeValue       // DateTime value, could be null if the type of the ProductAttribute is not DateTime or is not required.
+    Nullable<Boolean>           BooleanValue        // Boolean value, could be null if the type of the ProductAttribute is not Boolean or is not required.
+    String                      StringValue         // String value, could be null if the type of the ProductAttribute is not String or is not required.
+    String                      ListValue           // Localized list value, could be null if the type of the ProductAttribute is not List or is not required.
+    IEnumerable<FileDetail>     Files               // Collection of files linked to the Product by the ProductAttribute if the type of the ProductAttribute is kind of media.
+
+
+    
+    [OrderAddress]
+
+    Int32                               CountryId               // Unique ID of the Country.
+    Nullable<Guid>                      RegionId                // Unique ID of the region, could be null because some countries have no regions.
+    String                              Name                    // Unique user defined address name.
+    String                              EmailAddress            // Email address corresponding to the current address. Required on BillingAddress for express checkout.
+    String                              CompanyName             // Company name corresponding to the address.
+    String                              FirstName               // First name of the person who is billed or going to receive the Order.
+    String                              MiddleName              // Middle name of the person who is billed or going to receive the Order.
+    String                              LastName                // Last name of the person who is billed or going to receive the Order.
+    String                              Address1                // First address line. 
+    String                              Address2                // Second address line.
+    String                              Address3                // Third address line.
+    String                              ZipCode                 // Postal code of the address.
+    String                              CityName                // Name of the city.
+    String                              PhoneNumber             // Phone number associated to the address.
+    String                              MobileNumber            // Mobile number associated to the address.
+    String                              FaxNumber               // Fax number associated to the address.
+    String                              FloorNumber             // Floor or indications for delivery.
+    String                              DigiCode                // Security code for carrier access.
+    IEnumerable<Comment>                Comments                // Collection of Comments which could be used to store indications for carrier, packer or seller and managed in the Administration Console or by extensions.
+    IEnumerable<AdditionalDataItem>     AdditionalData          // Collection of additional which could be used to store indications for carrier, packer or seller and managed in the Administration Console or by extensions.
+
+*@

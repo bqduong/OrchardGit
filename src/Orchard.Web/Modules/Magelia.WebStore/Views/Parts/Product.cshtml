@@ -1,0 +1,253 @@
+﻿@functions{
+    Int32 GetVariantOrder(dynamic variant)
+    {
+        return variant.Order;
+    }
+
+    Int32 GetAttributeValueOrder(dynamic attributeValue)
+    {
+        return attributeValue.Attribute.Order;
+    }
+
+    Boolean IsNotFileAndSelectable(dynamic attributeValue)
+    {
+        String[] expectedAttributeTypeCodes = new[] { "application", "audio", "document", "file", "unknown", "video", "image", "applications", "audios", "documents", "files", "unknowns", "videos", "images" };
+        return attributeValue.Attribute.AllowSelection && !expectedAttributeTypeCodes.Contains(attributeValue.Attribute.AttributeTypeCode as String, StringComparer.OrdinalIgnoreCase);
+    }
+
+    IEnumerable<SelectListItem> GetVariants()
+    {
+        return Enumerable.Cast<dynamic>(this.Model.Target.BaseProduct.VariantProducts as IEnumerable<Object>).OrderBy(v => v.Order).Select(
+            vp => new SelectListItem
+            {
+                Value = vp.SKU,
+                Selected = vp.SKU.Equals(this.Model.Target.RequestedSKU, StringComparison.OrdinalIgnoreCase),
+                Text = String.Join(
+                    " , ",
+                    Enumerable.Where(vp.AttributeValues as IEnumerable<Object>, this.IsNotFileAndSelectable).OrderBy(this.GetAttributeValueOrder).Cast<dynamic>()
+                            .Select(
+                                av =>
+                                {
+                                    String value = null;
+                                    if ("boolean".Equals(av.Attribute.AttributeTypeCode, StringComparison.OrdinalIgnoreCase))
+                                    {
+                                        value = av.BooleanValue == null ? String.Empty : (av.BooleanValue ? T("Yes") : T("No")).ToString();
+                                    }
+                                    if ("datetime".Equals(av.Attribute.AttributeTypeCode, StringComparison.OrdinalIgnoreCase))
+                                    {
+                                        value = av.DateTimeValue == null ?
+                                                    this.T("No date").ToString() :
+                                                    TimeZoneInfo.ConvertTime(av.DateTimeValue, this.WorkContext.CurrentTimeZone).ToString("G");
+                                    }
+                                    if ("decimal".Equals(av.Attribute.AttributeTypeCode, StringComparison.OrdinalIgnoreCase))
+                                    {
+                                        value = av.DecimalValue.ToString();
+                                    }
+                                    if ("integer".Equals(av.Attribute.AttributeTypeCode, StringComparison.OrdinalIgnoreCase))
+                                    {
+                                        value = av.IntValue.ToString();
+                                    }
+                                    if ("list".Equals(av.Attribute.AttributeTypeCode, StringComparison.OrdinalIgnoreCase))
+                                    {
+                                        value = String.IsNullOrEmpty(av.ListValue) ? av.ListCode : av.ListValue;
+                                    }
+                                    if ("string".Equals(av.Attribute.AttributeTypeCode, StringComparison.OrdinalIgnoreCase))
+                                    {
+                                        value = av.StringValue;
+                                    }
+                                    return String.IsNullOrEmpty(value) ? String.Empty : String.Format("{0} : {1}", String.IsNullOrEmpty(av.Attribute.Name) ? av.Attribute.Code : av.Attribute.Name, value);
+                                }
+                            ).DefaultIfEmpty(vp.SKU as String)
+                )
+            }
+        );
+    }
+
+    IEnumerable<dynamic> GetDetails()
+    {
+        return Enumerable.Cast<dynamic>(this.Model.Target.ReferenceProduct.AttributeValues as IEnumerable<Object>)
+                               .Where(
+                                    av => av.Attribute.ShowInProductDetail &&
+                                          (
+                                             av.IntValue != null ||
+                                             av.BooleanValue != null ||
+                                             av.DecimalValue != null ||
+                                             av.DateTimeValue != null ||
+                                             !String.IsNullOrEmpty(av.ListCode) ||
+                                             !String.IsNullOrEmpty(av.ListValue) ||
+                                             !String.IsNullOrEmpty(av.StringValue) ||
+                                             Enumerable.Any(av.Files)
+                                          )
+                                )
+                                .OrderBy(av => av.Attribute.Order)
+                                .ToList();
+    }
+}
+
+@{
+    this.Style.Require("Magelia");   
+}
+
+@if (this.Model.Target.BaseProduct == null)
+{
+    <p class="mag-empty">@T("Product not found")</p>
+}
+else
+{
+    var details = this.GetDetails();
+    <div class="mag-product">
+        <h2>@Model.Target.BaseProduct.Name</h2>
+        @if (this.Model.Target.ReferenceProduct.Brand != null || this.Model.Target.BaseProduct.Brand != null)
+        {
+            <h3>@((this.Model.Target.ReferenceProduct.Brand ?? this.Model.Target.BaseProduct.Brand).Code)</h3>
+        }
+        @if (!String.IsNullOrEmpty(this.Model.Target.BaseProduct.LongDescription as String))
+        {
+            <div>
+                @Html.Raw(this.Model.Target.BaseProduct.LongDescription)
+            </div>
+        }
+        @if (!String.IsNullOrEmpty(this.Model.Target.BaseProduct.AdditionalDescription as String))
+        {
+            <div>
+                @Html.Raw(this.Model.Target.BaseProduct.AdditionalDescription)
+            </div>
+        }
+        @if (this.Model.Target.BaseProduct.GetType().Name.EndsWith("variableproduct", StringComparison.OrdinalIgnoreCase) && this.Model.FromUrl)
+        {
+            this.Script.Require("Magelia.VariantPicker");
+            String variantsDropDownListId = String.Format("_{0}", Guid.NewGuid());
+            
+            <div class="mag-variantPicker"
+                  data-config='
+                    {
+                        "variantFieldSelector":"#@variantsDropDownListId"
+                    }
+                '
+            >
+                @Html.Hidden(this.Model.CatalogCodeUrlParameterKey as String, this.Model.Target.RequestedCatalogCode as String)
+                <label for="@variantsDropDownListId">@T("Variants")</label>
+                @Html.DropDownList(this.Model.SKUUrlParameterKey as String, this.GetVariants(), new { id = variantsDropDownListId })
+            </div>
+        }
+        <p>@T("Price") : @(Model.Target.ReferenceProduct.PriceWithLowerQuantity.SalePriceIncludingDiscountAndTaxes.ToString("C", this.Model.NumberFormat))</p>
+        @if (details.Any())
+        {
+            <ul>
+                @foreach (var detail in details)
+                {
+                    var name = String.IsNullOrEmpty(detail.Attribute.Name) ? detail.Attribute.Code : detail.Attribute.Name;
+                    if (new[] { "application", "audio", "document", "file", "unknown", "video" }.Contains(detail.Attribute.AttributeTypeCode as String, StringComparer.OrdinalIgnoreCase))
+                    {
+                        var file = Enumerable.FirstOrDefault(detail.Files);
+                        if (file != null)
+                        {
+                    <li>
+                        @name : @Html.Link((String.IsNullOrEmpty(file.Name) ? String.IsNullOrEmpty(file.Title) ? String.IsNullOrEmpty(file.AlternateText) ? file.Path : file.AlternateText : file.Name : file.Title) as String, file.Path as String)
+                    </li>
+                        }
+                    }
+                    else if (new[] { "applications", "audios", "documents", "files", "unknowns", "videos" }.Contains(detail.Attribute.AttributeTypeCode as String, StringComparer.OrdinalIgnoreCase) && Enumerable.Any(detail.Files))
+                    {
+                    <li>
+                        <p>@name :</p>
+                        <ul>
+                            @foreach (var file in detail.Files)
+                            {
+                                <li>
+                                    @Html.Link((String.IsNullOrEmpty(file.Name) ? String.IsNullOrEmpty(file.AlternateText) ? file.Path : file.AlternateText : file.Name) as String, file.Path as String)
+                                </li>
+                            }
+
+                        </ul>
+                    </li>
+                    }
+                    else if ("boolean".Equals(detail.Attribute.AttributeTypeCode, StringComparison.OrdinalIgnoreCase) && detail.BooleanValue != null)
+                    {
+                    <li>
+                        @name : @T(detail.BooleanValue ? "Yes" : "No")
+                    </li>
+                    }
+                    else if ("datetime".Equals(detail.Attribute.AttributeTypeCode, StringComparison.OrdinalIgnoreCase) && detail.DateTimeValue != null)
+                    {
+                    <li>
+                        @name : @TimeZoneInfo.ConvertTime(detail.DateTimeValue, this.WorkContext.CurrentTimeZone).ToString("G")
+                    </li>
+                    }
+                    else if ("decimal".Equals(detail.Attribute.AttributeTypeCode, StringComparison.OrdinalIgnoreCase) && detail.DecimalValue != null)
+                    {
+                    <li>
+                        @name : @detail.DecimalValue
+                    </li>
+                    }
+                    else if ("image".Equals(detail.Attribute.AttributeTypeCode, StringComparison.OrdinalIgnoreCase))
+                    {
+                        var image = Enumerable.FirstOrDefault(detail.Files);
+                        if (image != null)
+                        {
+                    <li>
+                        <p>@name :</p>
+                        <img src="@image.Path" alt="@image.AlternateText" title="@image.Title" />
+                    </li>
+                        }
+                    }
+                    else if ("images".Equals(detail.Attribute.AttributeTypeCode, StringComparison.OrdinalIgnoreCase))
+                    {
+                        if (Enumerable.Any(detail.Files))
+                        { 
+                    <li>
+                        <p>@name :</p>
+                        <ul>
+                            @foreach (var image in detail.Files)
+                            {
+                                <li>
+                                    <img src="@image.Path" alt="@(String.IsNullOrEmpty(image.AlternateText) ? name : image.AlternateText)" title="@image.Title" />
+                                </li>
+                            }
+                        </ul>
+                    </li>
+                        }
+                    }
+                    else if ("integer".Equals(detail.Attribute.AttributeTypeCode, StringComparison.OrdinalIgnoreCase) && detail.IntValue != null)
+                    {
+                    <li>
+                        @name : @detail.IntValue
+                    </li>
+                    }
+                    else if ("list".Equals(detail.Attribute.AttributeTypeCode, StringComparison.OrdinalIgnoreCase))
+                    {
+                        if (!String.IsNullOrEmpty(detail.ListValue))
+                        {
+                    <li>
+                        @name : @detail.ListValue
+                    </li>
+                        }
+                        else if (!String.IsNullOrEmpty(detail.ListCode))
+                        {
+                    <li>
+                        @name : @detail.ListCode
+                    </li>
+                        }
+                    }
+                    else if ("string".Equals(detail.Attribute.AttributeTypeCode, StringComparison.OrdinalIgnoreCase) && !String.IsNullOrEmpty(detail.StringValue))
+                    {
+                    <li>
+                        @name : @detail.StringValue
+                    </li>
+                    }
+                }
+            </ul>
+        }
+        @if (this.Model.AllowAddToBasket)
+        {
+            if (Enumerable.Cast<dynamic>(this.Model.Target.Inventories as IEnumerable<Object>).Any(s => s.Available))
+            {
+                @Display(this.New.AddToBasket(ProductId: this.Model.Target.ReferenceProduct.ProductId))
+            }
+            else
+            {
+                <p>@T("Unavailable")</p>
+            }
+        }
+    </div>
+}

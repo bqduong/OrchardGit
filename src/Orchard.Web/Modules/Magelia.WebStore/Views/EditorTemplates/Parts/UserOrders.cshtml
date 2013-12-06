@@ -1,0 +1,23 @@
+﻿@model Magelia.WebStore.Models.Parts.UserOrdersPart
+<fieldset>
+    <legend>
+        @T("User orders settings")
+    </legend>
+    <div>
+        @Html.CheckBoxFor(m => m.EnableSorting)
+        <label for="@Html.FieldIdFor(m => m.EnableSorting)" class="forcheckbox">
+            @T("Enable sorting")
+        </label>
+    </div>
+    <div>
+        @Html.CheckBoxFor(m => m.EnablePaging)
+        <label for="@Html.FieldIdFor(m => m.EnablePaging)" class="forcheckbox">
+            @T("Enable paging")
+        </label>
+    </div>
+    <div>
+        @Html.LabelFor(m => m.PageSize, T("Orders per page"))
+        @Html.TextBoxFor(m => m.PageSize, new { @class = "text-box" })
+    </div>
+</fieldset>
+ 

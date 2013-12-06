@@ -1,0 +1,25 @@
+﻿@{
+    this.Style.Require("Magelia");
+    this.Script.Require("Magelia.Basket");
+}
+<div class="mag-basket"
+     data-config='
+        {
+            "getBasketUrl":"@Url.Action("GetBasket", new { controller = "Basket", area = "Magelia.WebStore", basketPartId = this.Model.BasketPartId })",
+            "updateBasketUrl":"@Url.Action("UpdateBasket", new { controller = "Basket", area = "Magelia.WebStore", basketPartId = this.Model.BasketPartId })",
+            "clearBasketUrl":"@Url.Action("ClearBasket", new { controller = "Basket", area = "Magelia.WebStore", basketPartId = this.Model.BasketPartId })",
+            "updateProductQuantityUrl":"@Url.Action("UpdateProductQuantity", new { controller = "Basket", area = "Magelia.WebStore", basketPartId = this.Model.BasketPartId })",
+            "removePromoCodeUrl":"@Url.Action("RemovePromoCode", new { controller = "Basket", area = "Magelia.WebStore", basketPartId = this.Model.BasketPartId })",
+            "addPromoCodeUrl":"@Url.Action("AddPromoCode", new { controller = "Basket", area = "Magelia.WebStore", basketPartId = this.Model.BasketPartId })",
+            "quantityFieldSelector":"input[name=quantity]",
+            "removeProductTriggerSelector":".mag-removeProduct",
+            "removePromoCodeTriggerSelector":".mag-removePromoCode",
+            "addPromoCodeTriggerSelector":".mag-addPromoCode",
+            "updateBasketTriggerSelector":".mag-updateBasket",
+            "clearBasketTriggerSelector":".mag-clearBasket",
+            "messageContainerSelector":".mag-message"
+        }
+     '
+>
+    <p class="mag-info">@T("Loading basket ...")</p>
+</div>

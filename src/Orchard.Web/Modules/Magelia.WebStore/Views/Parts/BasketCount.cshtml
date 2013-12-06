@@ -1,0 +1,12 @@
+﻿@{
+    this.Script.Require("Magelia.BasketCount");
+}
+<div class="mag-basketCount" 
+     data-config='
+         {
+            "getBasketCountUrl":"@Url.Action("BasketCount", new { controller = "Basket", area = "Magelia.WebStore", basketCountPartId = this.Model.BasketCountPartId })"
+         }
+    '
+>
+    <p>&nbsp;</p>
+</div>

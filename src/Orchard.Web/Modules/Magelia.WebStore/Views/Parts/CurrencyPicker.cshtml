@@ -1,0 +1,42 @@
+﻿@functions{
+    IEnumerable<SelectListItem> GetCurrencyItems()
+    {
+        List<SelectListItem> currencyItems = new List<SelectListItem>();
+
+        foreach (var currency in this.Model.Currencies)
+        {
+            currencyItems.Add(
+                new SelectListItem
+                {
+                    Value = currency.CurrencyId.ToString(),
+                    Selected = currency.CurrencyId == this.Model.CurrentCurrencyId,
+                    Text = String.IsNullOrEmpty(currency.Name) ? currency.Code : currency.Name
+                }
+            );
+        }
+
+        return currencyItems;
+    }
+}
+
+@{
+    String currenciesDropDownListId = String.Format("_{0}", Guid.NewGuid());
+
+    if (!this.IsAjax)
+    {
+        this.Style.Require("Magelia");
+        this.Script.Require("Magelia.CurrencyPicker");
+    }
+}
+
+<div class="mag-currencyPicker"
+         data-config='
+             {
+                "currencyFieldSelector":"#@currenciesDropDownListId",
+                "updateCurrencyUrl":"@Url.Action("UpdateCurrency", new { controller = "Context", area = "Magelia.WebStore" })"
+             }
+         '
+        >
+    <label for="@currenciesDropDownListId">@T("Currency")</label>
+    @Html.DropDownList("currencyId", this.GetCurrencyItems(), new { id = currenciesDropDownListId })
+</div>

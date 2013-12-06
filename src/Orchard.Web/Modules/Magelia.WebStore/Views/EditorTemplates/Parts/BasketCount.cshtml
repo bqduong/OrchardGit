@@ -1,0 +1,25 @@
+﻿@model Magelia.WebStore.Models.Parts.BasketCountPart
+
+@{
+    var counts = new List<SelectListItem>
+    {
+        new SelectListItem{ Text = T("Distinct products").ToString(), Value = 0.ToString() },
+        new SelectListItem{ Text = T("Distinct products and gifts").ToString(), Value = 1.ToString() },
+        new SelectListItem{ Text = T("Products quantities").ToString(), Value = 2.ToString() },
+        new SelectListItem{ Text = T("Products and gifts quantities").ToString(), Value = 3.ToString() }
+    };    
+}
+
+<fieldset>
+    <legend>@T("Basket count settings")</legend>
+    <div>
+        @Html.LabelFor(m => m.Count, T("Count"))
+        @Html.DropDownListFor(m => m.Count, counts)
+        <span class="hint">@T(@"Specify the way to count products in basket.")</span>
+    </div>
+    <div>
+        @Html.LabelFor(m => m.BasketUrl, T("Basket url"))
+        @Html.TextBoxFor(m => m.BasketUrl, new { @class = "text-box" })
+        <span class="hint">@T(@"Relative path of the basket page.")</span>
+    </div>
+</fieldset>

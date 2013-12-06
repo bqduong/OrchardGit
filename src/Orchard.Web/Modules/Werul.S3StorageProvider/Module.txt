@@ -1,0 +1,12 @@
+Name: S3 Storage Provider
+AntiForgery: enabled
+Author: Luke Hertert
+Website: http://orchards3storage.codeplex.com/
+Version: 0.9
+OrchardVersion: 1.1.30
+Description: An alternate storage provider that uses Amazon S3
+Features:
+    Werul.S3StorageProvider:
+	Name: S3 Storage Provider
+        Description: An alternate storage provider that uses Amazon S3
+		Category: Media	    

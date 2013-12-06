@@ -1,0 +1,50 @@
+﻿@model Magelia.WebStore.Models.Parts.CatalogHierarchyPart
+@{
+    this.Script.Require("jQuery");
+}
+@using (this.Script.Foot())
+{ 
+    <script type="text/javascript">
+        //<![CDATA[
+        $(document).ready(
+            function () {
+                var path = $('.mag-path');
+                var patterns = $('.mag-pattern');
+                $('#@Html.FieldIdFor(m => m.GenerateUrls)').change(
+                    function () {
+                        if ($(this).is(':checked')) {
+                            path.hide();
+                            patterns.show();
+                        }
+                        else {
+                            path.show();
+                            patterns.hide();
+                        }
+                    }
+                ).change();
+            }
+        );
+            //]]>
+    </script>
+}
+<fieldset>
+    <legend>@T("Catalog hierarchy settings")</legend>
+    <div>
+        @Html.CheckBoxFor(m => m.GenerateUrls)
+        <label class="forcheckbox" for="@Html.FieldIdFor(m => m.GenerateUrls)">
+            @T("Generate URLs for catalogs and categories")
+        </label>
+    </div>
+    <div class="mag-pattern">
+        @Html.LabelFor(m => m.CatalogUrlPattern, this.T("Catalog URL pattern"))
+        @Html.TextBoxFor(m => m.CatalogUrlPattern, new { @class = "textMedium" })
+    </div>
+    <div class="mag-pattern">
+        @Html.LabelFor(m => m.CategoryUrlPattern, this.T("Category URL pattern"))
+        @Html.TextBoxFor(m => m.CategoryUrlPattern, new { @class = "textMedium" })
+    </div>
+    <div class="mag-path">
+        @Html.LabelFor(m => m.TargetPath, this.T("Target path"))
+        @Html.TextBoxFor(m => m.TargetPath, new { @class = "textMedium" })
+    </div>
+</fieldset>

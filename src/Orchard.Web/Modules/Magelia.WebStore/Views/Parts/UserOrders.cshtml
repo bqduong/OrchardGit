@@ -1,0 +1,145 @@
+﻿@functions{
+    IHtmlString GetOrdersLink(String text, Int32 page)
+    {
+        return this.GetOrdersLink(text, this.Model.Orders.State.SortDirection.ToString(), this.Model.Orders.State.SortExpression.ToString(), page, null);
+    }
+
+    IHtmlString GetOrdersLink(String text, String sortExpression)
+    {
+        Boolean sorted = sortExpression.Equals(this.Model.Orders.State.SortExpression.ToString(), StringComparison.OrdinalIgnoreCase);
+        Boolean sortedAscending = this.Model.Orders.State.SortDirection.ToString().Equals("ascending", StringComparison.OrdinalIgnoreCase);
+        String sortDirection = (sorted && sortedAscending) || (!sorted && sortExpression.Equals("ordernumber", StringComparison.OrdinalIgnoreCase)) ? "Descending" : "Ascending";
+        String linkCssClass = sorted ? String.Format("sorted {0}", sortedAscending ? "asc" : "desc") : null;
+        return this.GetOrdersLink(text, sortDirection, sortExpression, this.Model.Orders.State.Page, linkCssClass);
+    }
+
+    IHtmlString GetOrdersLink(String text, String sortDirection, String sortExpression, Nullable<Int32> page, String linkCssClass)
+    {
+        IHtmlString translatedText = this.T(text);
+        if (this.Model.EnableSorting)
+        {
+            return this.Html.ActionLink(translatedText.ToString(), "GetOrders", new { controller = "User", area = "Magelia.WebStore", userOrdersPartId = this.Model.UserOrdersPartId, page = page, sortDirection = sortDirection, sortExpression = sortExpression }, new { @class = linkCssClass });
+        }
+        else
+        {
+            return translatedText;
+        }
+    }
+
+    System.Globalization.NumberFormatInfo GetNumberFormat(Int32 currencyId)
+    {
+        System.Globalization.NumberFormatInfo numberFormat = System.Globalization.CultureInfo.GetCultureInfo(this.WorkContext.CurrentCulture).NumberFormat.Clone() as System.Globalization.NumberFormatInfo;
+        foreach (var currency in this.Model.AvailableCurrencies)
+        {
+            if (currency.CurrencyId == currencyId)
+            {
+                numberFormat.CurrencySymbol = currency.Symbol;
+                break;
+            }
+        }
+        return numberFormat;
+    }
+}
+@{
+    this.Style.Require("Magelia");    
+}
+@if (this.Model.Authenticated)
+{
+    if (Enumerable.Any(this.Model.Orders))
+    {
+        this.Script.Require("Magelia.Orders");
+    <table class="mag-orders">
+        <thead>
+            <tr>
+                <th>
+                    @GetOrdersLink("Order number", "OrderNumber")
+                </th>
+                <th>
+                    @GetOrdersLink("Creation date", "CreationDate")
+                </th>
+                <th>
+                    @GetOrdersLink("Status", "Status")
+                </th>
+                <th>
+                    @GetOrdersLink("Total", "OrderTotalIncludingDiscount")
+                </th>
+                <th>
+                    @GetOrdersLink("Total including taxes", "OrderTotalIncludingTotalDiscountAndTaxes")
+                </th>
+                <th>
+                    @T("Detail")
+                </th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var order in this.Model.Orders)
+            {
+                System.Globalization.NumberFormatInfo numberFormat = this.GetNumberFormat(order.CurrencyId);
+                <tr>
+                    <td>
+                        @order.OrderNumber
+                    </td>
+                    <td>
+                        @TimeZoneInfo.ConvertTime(order.CreationDate, this.WorkContext.CurrentTimeZone).ToString("G")
+                    </td>
+                    <td>
+                        @T(order.Status.ToString())
+                    </td>
+                    <td>
+                        @order.OrderTotalIncludingDiscount.ToString("C", numberFormat)
+                    </td>
+                    <td>
+                        @order.OrderTotalIncludingTotalDiscountAndTaxes.ToString("C", numberFormat)
+                    </td>
+                    <td>
+                        @Html.ActionLink(this.T("Detail").ToString(), "GetOrder", new { controller = "User", area = "Magelia.WebStore", orderId = order.OrderHeaderId, userOrdersPartId = this.Model.UserOrdersPartId })
+                    </td>
+                </tr>
+            }
+        </tbody>
+        @if (this.Model.EnablePaging && this.Model.Orders.State.PageCount > 1)
+        {
+            <tfoot>
+                <tr>
+                    <td colspan="6">
+                        <ul>
+                            @if (this.Model.Orders.State.Page != 1)
+                            { 
+                                <li>
+                                    @GetOrdersLink("<<", 1)
+                                </li>
+                                <li>
+                                    @GetOrdersLink("<", this.Model.Orders.State.Page - 1)
+                                </li>
+                            }
+                            @for (var i = 1; i <= this.Model.Orders.State.PageCount; i++)
+                            { 
+                                <li class="@(this.Model.Orders.State.Page == i ? "selected" : null)">
+                                    @GetOrdersLink(i.ToString(), i)
+                                </li>
+                            }
+                            @if (this.Model.Orders.State.Page != this.Model.Orders.State.PageCount)
+                            { 
+                                <li>
+                                    @GetOrdersLink(">", this.Model.Orders.State.Page + 1)
+                                </li>
+                                <li>
+                                    @GetOrdersLink(">>", this.Model.Orders.State.PageCount)
+                                </li>
+                            }
+                        </ul>
+                    </td>
+                </tr>
+            </tfoot>
+        }
+    </table>
+    }
+    else
+    {
+    <p class="mag-empty">@T("No order to display")</p>
+    }
+}
+else
+{
+    @Display(this.New.Unauhtorized())
+}

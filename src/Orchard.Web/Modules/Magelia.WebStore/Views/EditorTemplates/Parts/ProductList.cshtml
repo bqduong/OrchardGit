@@ -1,0 +1,92 @@
+﻿@model Magelia.WebStore.Models.ViewModels.ProductList.ProductListEditViewModel
+@{
+    this.Script.Require("jQuery");
+}
+@using (this.Script.Foot())
+{ 
+    <script type="text/javascript">
+        //<![CDATA[
+        $(document).ready(
+            function () {
+                var filters = $('.mag-filter');
+                var catalogHierarchies = $('.mag-catalogHierarchies');
+                $('#@Html.FieldIdFor(m => m.Part.FromCatalogHierarchySelection)').change(
+                    function () {
+                        if ($(this).is(':checked')) {
+                            catalogHierarchies.show();
+                            filters.hide();
+                        }
+                        else {
+                            catalogHierarchies.hide();
+                            filters.show();
+                        }
+                    }
+                ).change();
+            }
+        );
+        //]]>
+    </script>
+}
+<fieldset>
+    <legend>
+        @T("Product list settings")
+    </legend>
+    <div>
+        @Html.CheckBoxFor(m => m.Part.FromCatalogHierarchySelection)
+        <label for="@Html.FieldIdFor(m => m.Part.FromCatalogHierarchySelection)" class="forcheckbox">
+            @T("Automatically display a list of products based on the choice of a catalog or category in the Magelia WebStore Catalogs and Categories component.")
+        </label>
+    </div>
+    <div class="mag-catalogHierarchies">
+        @Html.LabelFor(m => m.Part.CatalogHierarchyId, T("Magelia WebStore Catalogs and Categories component"))
+        @Html.DropDownListFor(m => m.Part.CatalogHierarchyId, this.Model.CatalogHierarchies, String.Empty)
+        <span class="hint">@T(@"If the above list is blank, please first create a Magelia WebStore Catalogs and Categories componnent to make it available.")</span>
+    </div>
+    <div class="mag-filter">
+        @Html.LabelFor(m => m.Part.CatalogCodeFilter, T("Catalog code filter"))
+        @Html.TextBoxFor(m => m.Part.CatalogCodeFilter, new { @class = "text-box" })
+    </div>
+    <div class="mag-filter">
+        @Html.LabelFor(m => m.Part.CategoryCodeFilter, T("Category code filter"))
+        @Html.TextBoxFor(m => m.Part.CategoryCodeFilter, new { @class = "text-box" })
+    </div>
+    <div>
+        @Html.CheckBoxFor(m => m.Part.EnableSorting)
+        <label for="@Html.FieldIdFor(m => m.Part.EnableSorting)" class="forcheckbox">
+            @T("Enable sorting")
+        </label>
+    </div>
+    <div>
+        @Html.CheckBoxFor(m => m.Part.EnablePaging)
+        <label for="@Html.FieldIdFor(m => m.Part.EnablePaging)" class="forcheckbox">
+            @T("Enable paging")
+        </label>
+    </div>
+    <div>
+        @Html.LabelFor(m => m.Part.PageSize, T("Products per page"))
+        @Html.TextBoxFor(m => m.Part.PageSize, new { @class = "text-box" })
+    </div>
+    <div>
+        @Html.CheckBoxFor(m => m.Part.DisplayViewDetail)
+        <label for="@Html.FieldIdFor(m => m.Part.DisplayViewDetail)" class="forcheckbox">
+            @T("Display \"view detail\" link")
+        </label>
+    </div>
+    <div>
+        @Html.LabelFor(m => m.Part.ViewDetailUrlPattern, T("URL pattern of \"view detail\" link"))
+        @Html.TextBoxFor(m => m.Part.ViewDetailUrlPattern, new { @class = "textMedium" })
+        <span class="hint">@T("Enter the URL pattern that leads to product detail page.<br/>In the folowing example, the relative path of the detail page is ~/Product : ~/Product?catalog={Catalog.Code}&product={SKU}<br/>This is a basic example and for an advanced experience, all product attributes (catalog name, product brand, etc.) can be dynamically accessed through the URL pattern.")</span>
+    </div>
+    <div>
+        @Html.CheckBoxFor(m => m.Part.AllowAddToBasket)
+        <label for="@Html.FieldIdFor(m => m.Part.AllowAddToBasket)" class="forcheckbox">
+            @T("Allow visitors to add products to basket")
+        </label>
+    </div>
+    <div>
+        @Html.CheckBoxFor(m => m.Part.DisplayProductsAvailability)
+        <label for="@Html.FieldIdFor(m => m.Part.DisplayProductsAvailability)" class="forcheckbox">
+            @T("Display products availability")
+        </label>
+    </div>
+</fieldset>
